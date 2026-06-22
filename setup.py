@@ -8,7 +8,7 @@ setup(
     author_email="platform@company.com",
     url="https://github.com/niteshme21/Airflow",
     packages=find_packages(),
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     install_requires=[
         "apache-airflow>=2.7.0",
         "sqlalchemy>=1.4.0",
