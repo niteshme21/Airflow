@@ -14,7 +14,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 import logging
 import json
-from .models.dag_dependency import (
+from plugins.models.dag_dependency import (
     CrossDAGDependency,
     DependencyExecution,
     CircularDependencyDetection,
@@ -22,7 +22,7 @@ from .models.dag_dependency import (
     DependencyStatus,
     DependencyType,
 )
-from .hooks.dependency_hook import DependencyManagementHook
+from plugins.hooks.dependency_hook import DependencyManagementHook
 
 logger = logging.getLogger(__name__)
 

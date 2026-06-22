@@ -43,7 +43,7 @@ class DependencyManagementHook(BaseHook):
         user_id: str = "system",
     ):
         """Create a new cross-DAG dependency"""
-        from .models.dag_dependency import (
+        from plugins.models.dag_dependency import (
             CrossDAGDependency,
             DependencyAuditLog,
             DependencyType,
@@ -98,7 +98,7 @@ class DependencyManagementHook(BaseHook):
 
     def get_all_dependencies(self) -> List:
         """Get all active dependencies"""
-        from .models.dag_dependency import CrossDAGDependency
+        from plugins.models.dag_dependency import CrossDAGDependency
 
         session = self.get_session()
         try:
@@ -118,7 +118,7 @@ class DependencyManagementHook(BaseHook):
         Detect if adding this dependency would create a circular reference
         Uses depth-first search
         """
-        from .models.dag_dependency import CrossDAGDependency
+        from plugins.models.dag_dependency import CrossDAGDependency
 
         session = self.get_session()
         try:
@@ -172,7 +172,7 @@ class DependencyManagementHook(BaseHook):
 
     def get_unresolved_circular_dependencies(self) -> List:
         """Get circular dependencies that haven't been resolved"""
-        from .models.dag_dependency import CircularDependencyDetection
+        from plugins.models.dag_dependency import CircularDependencyDetection
 
         session = self.get_session()
         try:
@@ -187,7 +187,7 @@ class DependencyManagementHook(BaseHook):
 
     def get_stuck_dependencies(self, timeout_minutes: int = 60) -> List:
         """Get dependencies that have been pending longer than timeout"""
-        from .models.dag_dependency import DependencyExecution, DependencyStatus
+        from plugins.models.dag_dependency import DependencyExecution, DependencyStatus
 
         session = self.get_session()
         try:
@@ -216,7 +216,7 @@ class DependencyManagementHook(BaseHook):
         metadata: Dict[str, Any],
     ):
         """Log a dependency check operation"""
-        from .models.dag_dependency import DependencyAuditLog
+        from plugins.models.dag_dependency import DependencyAuditLog
 
         session = self.get_session()
         try:
@@ -271,7 +271,7 @@ class DependencyManagementHook(BaseHook):
 
     def get_dependency_graph(self) -> Dict[str, Any]:
         """Get complete dependency graph"""
-        from .models.dag_dependency import CrossDAGDependency
+        from plugins.models.dag_dependency import CrossDAGDependency
 
         session = self.get_session()
         try:
