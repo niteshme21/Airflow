@@ -5,8 +5,8 @@ Cross-DAG Dependency Operators and Sensors
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from airflow.models import BaseOperator, BaseOperatorLink
-from airflow.sensors.base import BaseSensorOperator
-from airflow.utils.decorators import poke_mode_only, apply_defaults
+from airflow.sensors.base import BaseSensorOperator, poke_mode_only
+from airflow.utils.context import Context
 from airflow.models import DagModel, DagRun, TaskInstance
 from airflow.exceptions import AirflowException
 from airflow.utils.state import DagRunState, TaskInstanceState
@@ -23,6 +23,7 @@ from .hooks.dependency_hook import DependencyManagementHook
 logger = logging.getLogger(__name__)
 
 
+@poke_mode_only
 class CrossDAGDependencySensor(BaseSensorOperator):
     """
     Sensor that waits for a dependent DAG/task to reach a successful state
@@ -57,8 +58,7 @@ class CrossDAGDependencySensor(BaseSensorOperator):
         self.dependency_id = dependency_id
         self.hook = DependencyManagementHook()
 
-    @poke_mode_only
-    def poke(self, context: Dict[str, Any]) -> bool:
+    def poke(self, context: Context) -> bool:
         """
         Check if upstream DAG/task has completed successfully
         """
@@ -127,13 +127,13 @@ class CrossDAGDependencySensor(BaseSensorOperator):
         finally:
             session.close()
 
-    def _log_dependency_check(self, task_instance, status: DependencyStatus, context: Dict):
+    def _log_dependency_check(self, task_instance, status: DependencyStatus, context: Context):
         """Log dependency check to audit trail"""
         self.hook.log_dependency_check(
             source_dag_id=self.source_dag_id,
             dependent_dag_id=context['dag'].dag_id,
             status=status,
-            user_id=context.get('task_instance').owner,
+            user_id=task_instance.owner,
             metadata={
                 'source_task_id': self.source_task_id,
                 'dependent_task_id': task_instance.task_id,
@@ -174,7 +174,7 @@ class RegisterCrossDAGDependencyOperator(BaseOperator):
         self.skip_on_failure = skip_on_failure
         self.hook = DependencyManagementHook()
 
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, context: Context) -> Dict[str, Any]:
         """Register the dependency"""
         # Check for circular dependencies
         if self.hook.detect_circular_dependency(
@@ -212,12 +212,12 @@ class DependencyVisualizationOperator(BaseOperator):
         self.output_path = output_path
         self.hook = DependencyManagementHook()
 
-    def execute(self, context: Dict[str, Any]) -> str:
+    def execute(self, context: Context) -> str:
         """Generate visualization"""
         dependencies = self.hook.get_all_dependencies()
         
         # Build graph structure
-        graph = {
+        graph: Dict[str, List[Dict[str, Any]]] = {
             'nodes': [],
             'edges': []
         }
@@ -258,9 +258,9 @@ class HealthCheckOperator(BaseOperator):
         super().__init__(**kwargs)
         self.hook = DependencyManagementHook()
 
-    def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, context: Context) -> Dict[str, Any]:
         """Run health checks"""
-        health_report = {
+        health_report: Dict[str, Any] = {
             'timestamp': datetime.utcnow().isoformat(),
             'status': 'HEALTHY',
             'checks': {}

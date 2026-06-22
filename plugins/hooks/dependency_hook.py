@@ -3,7 +3,7 @@ Dependency Management Hook
 Core business logic for dependency tracking and validation
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import Session
 from airflow.hooks.base import BaseHook
@@ -112,7 +112,7 @@ class DependencyManagementHook(BaseHook):
                 CrossDAGDependency.is_active == True
             ).all()
             
-            graph = {}
+            graph: Dict[str, List[str]] = {}
             for dep in all_deps:
                 if dep.source_dag_id not in graph:
                     graph[dep.source_dag_id] = []
@@ -139,7 +139,7 @@ class DependencyManagementHook(BaseHook):
             graph[source_dag_id].append(dependent_dag_id)
             
             # Check for cycles
-            visited = set()
+            visited: Set[str] = set()
             for node in graph:
                 if node not in visited:
                     if has_cycle(node, visited, set()):
