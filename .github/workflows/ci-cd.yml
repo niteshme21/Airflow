@@ -23,19 +23,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r airflow-enterprise/requirements.txt
+          pip install -r requirements.txt
 
       - name: Lint with flake8
         run: |
-          flake8 airflow-enterprise/plugins airflow-enterprise/dags --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 plugins dags --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Type check with mypy
         run: |
-          mypy airflow-enterprise/plugins --ignore-missing-imports
+          mypy plugins --ignore-missing-imports
 
       - name: Format check with black
         run: |
-          black --check airflow-enterprise/plugins airflow-enterprise/dags
+          black --check plugins dags
 
   test:
     runs-on: ubuntu-latest
@@ -50,11 +50,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r airflow-enterprise/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run unit tests
         run: |
-          pytest airflow-enterprise/tests/ -v --cov=airflow-enterprise/plugins --cov-report=xml
+          pytest tests/ -v --cov=plugins --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -94,7 +94,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./airflow-enterprise
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -112,10 +112,10 @@ jobs:
           terraform_version: 1.6.0
 
       - name: Terraform Format Check
-        run: terraform fmt -check -recursive airflow-enterprise/terraform
+        run: terraform fmt -check -recursive terraform
 
       - name: Terraform Validate
-        run: terraform validate airflow-enterprise/terraform
+        run: terraform validate terraform
 
   security-scan:
     runs-on: ubuntu-latest
@@ -156,20 +156,20 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: airflow-enterprise/terraform
+        working-directory: terraform
 
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
             -var="environment=dev" \
             -var="aws_region=ap-south-1"
-        working-directory: airflow-enterprise/terraform
+        working-directory: terraform
 
       - name: Deploy to EKS
         run: |
           CLUSTER_NAME=$(aws eks list-clusters --region ap-south-1 --query 'clusters[0]' --output text)
           aws eks update-kubeconfig --name $CLUSTER_NAME --region ap-south-1
-          kubectl apply -f airflow-enterprise/k8s/airflow-deployment.yaml
+          kubectl apply -f k8s/airflow-deployment.yaml
 
   deploy-prod:
     runs-on: ubuntu-latest
@@ -192,17 +192,17 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: airflow-enterprise/terraform
+        working-directory: terraform
 
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
             -var="environment=prod" \
             -var="aws_region=ap-south-1"
-        working-directory: airflow-enterprise/terraform
+        working-directory: terraform
 
       - name: Deploy to EKS
         run: |
           CLUSTER_NAME=$(aws eks list-clusters --region ap-south-1 --query 'clusters[0]' --output text)
           aws eks update-kubeconfig --name $CLUSTER_NAME --region ap-south-1
-          kubectl apply -f airflow-enterprise/k8s/airflow-deployment.yaml
+          kubectl apply -f k8s/airflow-deployment.yaml
