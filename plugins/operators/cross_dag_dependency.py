@@ -68,7 +68,7 @@ class CrossDAGDependencySensor(BaseSensorOperator):
         
         try:
             # Check if source DAG run exists and is in success state
-            success = self._check_source_status(execution_date, context)
+            success = self._check_source_status(execution_date)
             
             if success:
                 # Log successful dependency check
@@ -88,7 +88,7 @@ class CrossDAGDependencySensor(BaseSensorOperator):
                 raise AirflowException(f"Dependency check failed: {str(e)}")
             return True
 
-    def _check_source_status(self, execution_date: datetime, context: Dict) -> bool:
+    def _check_source_status(self, execution_date: datetime) -> bool:
         """Check if source DAG/task completed successfully"""
         from airflow.models import DagRun, TaskInstance
         from airflow.utils.state import DagRunState, TaskInstanceState
@@ -133,7 +133,7 @@ class CrossDAGDependencySensor(BaseSensorOperator):
             source_dag_id=self.source_dag_id,
             dependent_dag_id=context['dag'].dag_id,
             status=status,
-            user_id=task_instance.owner,
+            user_id=getattr(task_instance, 'owner', 'system') or 'system',
             metadata={
                 'source_task_id': self.source_task_id,
                 'dependent_task_id': task_instance.task_id,
@@ -194,7 +194,7 @@ class RegisterCrossDAGDependencyOperator(BaseOperator):
             dependent_task_id=self.dependent_task_id,
             timeout_seconds=self.timeout_seconds,
             skip_on_failure=self.skip_on_failure,
-            user_id=context['task_instance'].owner,
+            user_id=getattr(context['task_instance'], 'owner', 'system') or 'system',
         )
         
         logger.info(f"Registered dependency: {dependency.id}")
