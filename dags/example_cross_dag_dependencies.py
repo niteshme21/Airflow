@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add plugins to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugins.operators.cross_dag_dependency import (
     CrossDAGDependencySensor,
@@ -20,10 +20,10 @@ from plugins.operators.cross_dag_dependency import (
 )
 
 default_args = {
-    'owner': 'enterprise_platform',
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-    'start_date': days_ago(1),
+    "owner": "enterprise_platform",
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
+    "start_date": days_ago(1),
 }
 
 # ============================================================================
@@ -31,29 +31,31 @@ default_args = {
 # ============================================================================
 
 dag_1 = DAG(
-    'etl_source_data_extraction',
+    "etl_source_data_extraction",
     default_args=default_args,
-    description='Extract data from source systems',
-    schedule_interval='@daily',
+    description="Extract data from source systems",
+    schedule_interval="@daily",
     catchup=False,
-    tags=['etl', 'enterprise'],
+    tags=["etl", "enterprise"],
 )
+
 
 def extract_data():
     print("Extracting data from sources...")
     return {"status": "success", "records": 1000}
 
+
 with dag_1:
     extract = PythonOperator(
-        task_id='extract_from_api',
+        task_id="extract_from_api",
         python_callable=extract_data,
     )
-    
+
     validate = BashOperator(
-        task_id='validate_data',
-        bash_command='echo "Validating {{ task_instance.xcom_pull(task_ids=\'extract_from_api\') }}"',
+        task_id="validate_data",
+        bash_command="echo \"Validating {{ task_instance.xcom_pull(task_ids='extract_from_api') }}\"",
     )
-    
+
     extract >> validate
 
 
@@ -62,42 +64,42 @@ with dag_1:
 # ============================================================================
 
 dag_2 = DAG(
-    'analytics_transformation_pipeline',
+    "analytics_transformation_pipeline",
     default_args=default_args,
-    description='Transform data from source DAG',
-    schedule_interval='@daily',
+    description="Transform data from source DAG",
+    schedule_interval="@daily",
     catchup=False,
-    tags=['analytics', 'enterprise'],
+    tags=["analytics", "enterprise"],
 )
 
 with dag_2:
     # Register dependency: this DAG depends on etl_source_data_extraction
     register_dep = RegisterCrossDAGDependencyOperator(
-        task_id='register_dependency',
-        source_dag_id='etl_source_data_extraction',
-        dependent_dag_id='analytics_transformation_pipeline',
+        task_id="register_dependency",
+        source_dag_id="etl_source_data_extraction",
+        dependent_dag_id="analytics_transformation_pipeline",
         timeout_seconds=7200,  # 2 hours
     )
-    
+
     # Wait for the source DAG to complete
     wait_for_source = CrossDAGDependencySensor(
-        task_id='wait_for_source_completion',
-        source_dag_id='etl_source_data_extraction',
+        task_id="wait_for_source_completion",
+        source_dag_id="etl_source_data_extraction",
         timeout_seconds=7200,
         poke_interval=60,
     )
-    
+
     # Transform the data
     transform = PythonOperator(
-        task_id='transform_data',
+        task_id="transform_data",
         python_callable=lambda: print("Transforming data..."),
     )
-    
+
     load = PythonOperator(
-        task_id='load_to_warehouse',
+        task_id="load_to_warehouse",
         python_callable=lambda: print("Loading to data warehouse..."),
     )
-    
+
     register_dep >> wait_for_source >> transform >> load
 
 
@@ -106,34 +108,34 @@ with dag_2:
 # ============================================================================
 
 dag_3 = DAG(
-    'executive_reporting_pipeline',
+    "executive_reporting_pipeline",
     default_args=default_args,
-    description='Generate executive reports',
-    schedule_interval='@daily',
+    description="Generate executive reports",
+    schedule_interval="@daily",
     catchup=False,
-    tags=['reporting', 'enterprise'],
+    tags=["reporting", "enterprise"],
 )
 
 with dag_3:
     # Wait for analytics transformation to complete
     wait_for_analytics = CrossDAGDependencySensor(
-        task_id='wait_for_analytics_completion',
-        source_dag_id='analytics_transformation_pipeline',
+        task_id="wait_for_analytics_completion",
+        source_dag_id="analytics_transformation_pipeline",
         timeout_seconds=7200,
     )
-    
+
     # Generate reports
     generate_report = BashOperator(
-        task_id='generate_executive_report',
+        task_id="generate_executive_report",
         bash_command='echo "Generating reports for executives"',
     )
-    
+
     # Send to stakeholders
     notify = PythonOperator(
-        task_id='send_to_stakeholders',
+        task_id="send_to_stakeholders",
         python_callable=lambda: print("Sending reports to stakeholders..."),
     )
-    
+
     wait_for_analytics >> generate_report >> notify
 
 
@@ -142,25 +144,25 @@ with dag_3:
 # ============================================================================
 
 dag_monitor = DAG(
-    'dependency_management_monitor',
+    "dependency_management_monitor",
     default_args=default_args,
-    description='Monitor and visualize all cross-DAG dependencies',
-    schedule_interval='@hourly',
+    description="Monitor and visualize all cross-DAG dependencies",
+    schedule_interval="@hourly",
     catchup=False,
-    tags=['monitoring', 'enterprise'],
+    tags=["monitoring", "enterprise"],
 )
 
 with dag_monitor:
     visualize_deps = DependencyVisualizationOperator(
-        task_id='generate_dependency_graph',
-        output_path='/tmp/dependency_graph.json',
+        task_id="generate_dependency_graph",
+        output_path="/tmp/dependency_graph.json",
     )
-    
+
     health_check = BashOperator(
-        task_id='health_check_system',
+        task_id="health_check_system",
         bash_command='echo "Running health checks..."',
     )
-    
+
     visualize_deps >> health_check
 
 
