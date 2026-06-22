@@ -68,8 +68,8 @@ variable "tags" {
   description = "Common tags"
   type        = map(string)
   default = {
-    Project     = "airflow-enterprise"
-    ManagedBy   = "Terraform"
-    CreatedBy   = "Platform-Engineering"
+    Project   = "airflow-enterprise"
+    ManagedBy = "Terraform"
+    CreatedBy = "Platform-Engineering"
   }
 }

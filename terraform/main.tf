@@ -136,9 +136,9 @@ resource "aws_rds_cluster" "airflow" {
 }
 
 resource "aws_rds_cluster_instance" "airflow" {
-  count              = var.db_instance_count
-  cluster_identifier = aws_rds_cluster.airflow.id
-  instance_class     = var.db_instance_class
+  count               = var.db_instance_count
+  cluster_identifier  = aws_rds_cluster.airflow.id
+  instance_class      = var.db_instance_class
   engine              = aws_rds_cluster.airflow.engine
   engine_version      = aws_rds_cluster.airflow.engine_version
   publicly_accessible = false
