@@ -25,8 +25,8 @@ COPY dags/ ${AIRFLOW_HOME}/dags/
 COPY migrations/ ${AIRFLOW_HOME}/migrations/
 
 # Install the package
-COPY . /tmp/airflow-enterprise
-RUN cd /tmp/airflow-enterprise && pip install -e .
+COPY --chown=airflow:0 . /tmp/airflow-enterprise
+RUN cd /tmp/airflow-enterprise && pip install .
 
 EXPOSE 8080
 
