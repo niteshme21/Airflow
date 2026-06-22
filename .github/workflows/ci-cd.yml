@@ -148,6 +148,9 @@ jobs:
     needs: [build, terraform-validate, security-scan]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     environment: dev
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -184,6 +187,9 @@ jobs:
     needs: [build, terraform-validate, security-scan]
     if: false # Kept on hold (originally: github.ref == 'refs/heads/main')
     environment: prod
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
