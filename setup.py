@@ -11,7 +11,7 @@ setup(
     python_requires=">=3.9",
     install_requires=[
         "apache-airflow>=2.7.0",
-        "sqlalchemy>=2.0.0",
+        "sqlalchemy>=1.4.0",
         "prometheus-client>=0.19.0",
         "psycopg2-binary>=2.9.0",
     ],
