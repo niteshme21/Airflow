@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: airflow-metrics
+  namespace: airflow-enterprise
+spec:
+  selector:
+    matchLabels:
+      app: airflow-webserver
+  endpoints:
+  - port: metrics
+    interval: 30s
