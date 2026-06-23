@@ -170,7 +170,8 @@ jobs:
           terraform init \
             -backend-config="bucket=niteshme21-airflow-tfstate" \
             -backend-config="key=airflow-enterprise/dev/terraform.tfstate" \
-            -backend-config="region=ap-south-1"
+            -backend-config="region=ap-south-1" \
+            -backend-config="dynamodb_table=niteshme21-airflow-tflocks"
         working-directory: terraform
 
       - name: Terraform Apply
@@ -213,7 +214,8 @@ jobs:
           terraform init \
             -backend-config="bucket=niteshme21-airflow-tfstate" \
             -backend-config="key=airflow-enterprise/prod/terraform.tfstate" \
-            -backend-config="region=ap-south-1"
+            -backend-config="region=ap-south-1" \
+            -backend-config="dynamodb_table=niteshme21-airflow-tflocks"
         working-directory: terraform
 
       - name: Terraform Apply
