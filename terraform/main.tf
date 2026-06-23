@@ -183,6 +183,10 @@ resource "random_password" "db_password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+resource "random_id" "fernet_key" {
+  byte_length = 32
+}
+
 resource "aws_db_parameter_group" "airflow" {
   name        = "${var.environment}-airflow-db-params"
   family      = "postgres15"
@@ -203,7 +207,10 @@ resource "aws_security_group" "rds" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.eks_cluster.id]
+    security_groups = [
+      aws_security_group.eks_cluster.id,
+      aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+    ]
   }
 
   egress {
@@ -327,4 +334,36 @@ output "db_password_secret" {
   value       = random_password.db_password.result
   sensitive   = true
   description = "RDS master password"
+}
+
+# ============================================================================
+# Kubernetes Provider & Resources
+# ============================================================================
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = aws_eks_cluster.main.name
+}
+
+provider "kubernetes" {
+  host                   = aws_eks_cluster.main.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+resource "kubernetes_namespace" "airflow" {
+  metadata {
+    name = "airflow-enterprise"
+  }
+}
+
+resource "kubernetes_secret" "airflow_secrets" {
+  metadata {
+    name      = "airflow-secrets"
+    namespace = kubernetes_namespace.airflow.metadata[0].name
+  }
+
+  data = {
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.airflow.endpoint}/airflow"
+    FERNET_KEY                          = random_id.fernet_key.b64_url
+  }
 }

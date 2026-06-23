@@ -1,10 +1,4 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: airflow-enterprise
-
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
   name: airflow-config
@@ -15,20 +9,8 @@ data:
   AIRFLOW__CORE__BASE_LOG_FOLDER: /home/airflow/logs
   AIRFLOW__CORE__PLUGINS_FOLDER: /home/airflow/plugins
   AIRFLOW__CORE__LOAD_EXAMPLES: "False"
-  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://airflow:password@airflow-postgres.airflow-enterprise.svc.cluster.local:5432/airflow
   AIRFLOW__CORE__EXECUTOR: KubernetesExecutor
   AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: airflow-secrets
-  namespace: airflow-enterprise
-type: Opaque
-stringData:
-  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql://airflow:airflow123@airflow-postgres:5432/airflow"
-  FERNET_KEY: "your-fernet-key-here"
 
 ---
 apiVersion: apps/v1
@@ -48,10 +30,13 @@ spec:
     spec:
       containers:
       - name: webserver
-        image: apache/airflow:2.7.0
+        image: ghcr.io/niteshme21/airflow-enterprise:main
         command: ["airflow", "webserver"]
         ports:
         - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: airflow-config
         env:
         - name: AIRFLOW__CORE__LOAD_EXAMPLES
           value: "False"
@@ -60,6 +45,11 @@ spec:
             secretKeyRef:
               name: airflow-secrets
               key: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: FERNET_KEY
         resources:
           requests:
             cpu: "500m"
@@ -67,24 +57,12 @@ spec:
           limits:
             cpu: "1000m"
             memory: "2Gi"
-        volumeMounts:
-        - name: dags
-          mountPath: /home/airflow/dags
-        - name: plugins
-          mountPath: /home/airflow/plugins
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 60
-      volumes:
-      - name: dags
-        configMap:
-          name: airflow-dags
-      - name: plugins
-        configMap:
-          name: airflow-plugins
 
 ---
 apiVersion: apps/v1
@@ -104,8 +82,11 @@ spec:
     spec:
       containers:
       - name: scheduler
-        image: apache/airflow:2.7.0
+        image: ghcr.io/niteshme21/airflow-enterprise:main
         command: ["airflow", "scheduler"]
+        envFrom:
+        - configMapRef:
+            name: airflow-config
         env:
         - name: AIRFLOW__CORE__LOAD_EXAMPLES
           value: "False"
@@ -114,6 +95,11 @@ spec:
             secretKeyRef:
               name: airflow-secrets
               key: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: FERNET_KEY
         resources:
           requests:
             cpu: "500m"
@@ -121,18 +107,6 @@ spec:
           limits:
             cpu: "1000m"
             memory: "2Gi"
-        volumeMounts:
-        - name: dags
-          mountPath: /home/airflow/dags
-        - name: plugins
-          mountPath: /home/airflow/plugins
-      volumes:
-      - name: dags
-        configMap:
-          name: airflow-dags
-      - name: plugins
-        configMap:
-          name: airflow-plugins
 
 ---
 apiVersion: v1
