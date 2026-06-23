@@ -350,6 +350,11 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
 
+import {
+  to = kubernetes_namespace.airflow
+  id = "airflow-enterprise"
+}
+
 resource "kubernetes_namespace" "airflow" {
   metadata {
     name = "airflow-enterprise"
