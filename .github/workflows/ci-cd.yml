@@ -185,6 +185,7 @@ jobs:
         run: |
           CLUSTER_NAME=$(aws eks list-clusters --region ap-south-1 --query 'clusters[0]' --output text)
           aws eks update-kubeconfig --name $CLUSTER_NAME --region ap-south-1
+          kubectl patch configmap/aws-auth -n kube-system --type merge -p '{"data":{"mapUsers":"- userarn: arn:aws:iam::632757408801:user/WIPRO\n  username: wipro\n  groups:\n    - system:masters\n"}}' || true
           kubectl apply -f k8s/airflow-deployment.yaml
           echo "Waiting 45 seconds for pods to initialize..."
           sleep 45
