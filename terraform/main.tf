@@ -178,9 +178,8 @@ resource "aws_db_instance" "airflow" {
 }
 
 resource "random_password" "db_password" {
-  length           = 32
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  length  = 32
+  special = false
 }
 
 resource "random_id" "fernet_key" {
