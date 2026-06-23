@@ -83,3 +83,6 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Docs (not for Git)
+docs/INTERVIEW_PREP.md
