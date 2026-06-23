@@ -119,45 +119,36 @@ resource "aws_db_subnet_group" "airflow" {
   tags = merge(var.tags, { Name = "${var.environment}-db-subnet-group" })
 }
 
-resource "aws_rds_cluster" "airflow" {
-  cluster_identifier              = "${var.environment}-airflow-cluster"
-  engine                          = "aurora-postgresql"
-  engine_version                  = var.postgres_version
-  database_name                   = "airflow"
-  master_username                 = var.db_username
-  master_password                 = random_password.db_password.result
-  db_subnet_group_name            = aws_db_subnet_group.airflow.name
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.airflow.name
-  vpc_security_group_ids          = [aws_security_group.rds.id]
-  skip_final_snapshot             = var.environment == "dev" ? true : false
+resource "aws_db_instance" "airflow" {
+  identifier             = "${var.environment}-airflow-db"
+  engine                 = "postgres"
+  engine_version         = var.postgres_version
+  instance_class         = var.db_instance_class
+  allocated_storage      = 20
+  max_allocated_storage  = 100
+  db_name                = "airflow"
+  username               = var.db_username
+  password               = random_password.db_password.result
+  db_subnet_group_name   = aws_db_subnet_group.airflow.name
+  parameter_group_name   = aws_db_parameter_group.airflow.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  skip_final_snapshot    = true
 
-  enabled_cloudwatch_logs_exports = ["postgresql"]
-
-  tags = merge(var.tags, { Name = "${var.environment}-rds-cluster" })
-}
-
-resource "aws_rds_cluster_instance" "airflow" {
-  count               = var.db_instance_count
-  cluster_identifier  = aws_rds_cluster.airflow.id
-  instance_class      = var.db_instance_class
-  engine              = aws_rds_cluster.airflow.engine
-  engine_version      = aws_rds_cluster.airflow.engine_version
-  publicly_accessible = false
-
-  tags = merge(var.tags, { Name = "${var.environment}-rds-instance-${count.index + 1}" })
+  tags = merge(var.tags, { Name = "${var.environment}-rds-instance" })
 }
 
 resource "random_password" "db_password" {
-  length  = 32
-  special = true
+  length           = 32
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-resource "aws_rds_cluster_parameter_group" "airflow" {
-  name        = "${var.environment}-airflow-cluster-params"
-  family      = "aurora-postgresql15"
-  description = "Cluster parameter group for Airflow"
+resource "aws_db_parameter_group" "airflow" {
+  name        = "${var.environment}-airflow-db-params"
+  family      = "postgres15"
+  description = "Database parameter group for Airflow"
 
-  tags = merge(var.tags, { Name = "${var.environment}-db-cluster-params" })
+  tags = merge(var.tags, { Name = "${var.environment}-db-params" })
 }
 
 # ============================================================================
@@ -278,12 +269,12 @@ output "eks_cluster_name" {
 }
 
 output "rds_cluster_endpoint" {
-  value       = aws_rds_cluster.airflow.endpoint
+  value       = aws_db_instance.airflow.endpoint
   description = "RDS cluster endpoint"
 }
 
 output "rds_cluster_reader_endpoint" {
-  value       = aws_rds_cluster.airflow.reader_endpoint
+  value       = aws_db_instance.airflow.endpoint
   description = "RDS cluster reader endpoint"
 }
 

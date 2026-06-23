@@ -13,25 +13,25 @@ variable "environment" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.27"
+  default     = "1.30"
 }
 
 variable "node_instance_type" {
   description = "EKS node instance type"
   type        = string
-  default     = "t3.xlarge"
+  default     = "t3.micro"
 }
 
 variable "node_desired_size" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "node_max_size" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 10
+  default     = 3
 }
 
 variable "node_min_size" {
@@ -43,7 +43,7 @@ variable "node_min_size" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.medium"
+  default     = "db.t3.micro"
 }
 
 variable "db_instance_count" {
