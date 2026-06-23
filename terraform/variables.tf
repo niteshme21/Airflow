@@ -55,7 +55,7 @@ variable "db_instance_count" {
 variable "postgres_version" {
   description = "PostgreSQL version"
   type        = string
-  default     = "15.2"
+  default     = "15.18"
 }
 
 variable "db_username" {
