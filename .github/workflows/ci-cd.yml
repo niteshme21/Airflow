@@ -186,6 +186,14 @@ jobs:
           CLUSTER_NAME=$(aws eks list-clusters --region ap-south-1 --query 'clusters[0]' --output text)
           aws eks update-kubeconfig --name $CLUSTER_NAME --region ap-south-1
           kubectl apply -f k8s/airflow-deployment.yaml
+          echo "Waiting 45 seconds for pods to initialize..."
+          sleep 45
+          echo "=== PODS STATUS ==="
+          kubectl get pods -n airflow-enterprise -o wide
+          echo "=== WEBSERVER LOGS ==="
+          kubectl logs -n airflow-enterprise -l app=airflow-webserver --all-containers --tail=100 || true
+          echo "=== SCHEDULER LOGS ==="
+          kubectl logs -n airflow-enterprise -l app=airflow-scheduler --tail=100 || true
 
   deploy-prod:
     runs-on: ubuntu-latest
