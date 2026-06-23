@@ -28,6 +28,35 @@ spec:
       labels:
         app: airflow-webserver
     spec:
+      initContainers:
+      - name: init-db
+        image: ghcr.io/niteshme21/airflow-enterprise:main
+        command:
+        - bash
+        - -c
+        - |
+          airflow db init
+          airflow users create \
+            --username admin \
+            --password admin123 \
+            --firstname Admin \
+            --lastname User \
+            --role Admin \
+            --email admin@airflow.com || true
+        envFrom:
+        - configMapRef:
+            name: airflow-config
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        - name: AIRFLOW__CORE__FERNET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airflow-secrets
+              key: FERNET_KEY
       containers:
       - name: webserver
         image: ghcr.io/niteshme21/airflow-enterprise:main
