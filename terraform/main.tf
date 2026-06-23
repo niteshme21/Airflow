@@ -355,6 +355,11 @@ import {
   id = "airflow-enterprise"
 }
 
+import {
+  to = kubernetes_secret.airflow_secrets
+  id = "airflow-enterprise/airflow-secrets"
+}
+
 resource "kubernetes_namespace" "airflow" {
   metadata {
     name = "airflow-enterprise"
